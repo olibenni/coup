@@ -3,7 +3,7 @@ from deck import Deck
 
 
 class Game:
-    turn = -1
+    player_index = -1
     players = []
     deck = Deck()
 
@@ -17,10 +17,10 @@ class Game:
             self.players.append(Player(self, name, i))
 
     def next_turn(self):
-        self.turn += 1
+        self.player_index += 1
         print("======================================================")
         for player in self.players:
-            print([player.name, player.coins, len(player.cards)])
+            print([player.name, player.coins, len(player.cards)], player.cards)
         print(self.current_player.cards)
         print("======================================================")
 
@@ -30,7 +30,7 @@ class Game:
 
     @property
     def current_player(self):
-        return self.players[self.turn % len(self.players)]
+        return self.players[self.player_index % len(self.players)]
 
     def next_player(self, player):
         next_seat = (player.seat + 1) % len(self.players)
@@ -53,7 +53,9 @@ class Game:
         return False, False
 
     def remove_player(self, player):
+        self.player_index -= 1
         self.players.remove(player)
+        print("XXX Death of player {} XXX".format(player.name))
 
 if __name__ == "__main__":
     game = Game()
@@ -74,22 +76,27 @@ if __name__ == "__main__":
         if selected_action.can_be_challenged:
             end_turn, current_player_won = game.round_of_challenges(current_player, selected_action)
             if end_turn:
-                continue  # Next turn
+                continue  # Challenge made and resolved
 
         if selected_action.can_be_blocked is True:
             blocking_player = game.next_player(current_player)
             while blocking_player is not game.current_player:
-                if blocking_player.performs_block():
+                if victim is not None and blocking_player is not victim:
+                    # Only victim can block
+                    pass
+                elif blocking_player.performs_block():
+                    # If no victim, all can block
                     blocking_action = selected_action.blocked_by(blocking_player)
                     end_turn, blocking_player_won = game.round_of_challenges(blocking_player, blocking_action)
                     if end_turn and blocking_player_won:
-                        break  # Next turn
+                        break  # Block successful
                     if end_turn:
                         selected_action.resolve()
-                        break
+                        break  # Block failed, action resolves
 
                 blocking_player = game.next_player(blocking_player)
 
-        selected_action.resolve()
+        if not end_turn:
+            selected_action.resolve()
 
     print("Game Over!!, Winner is {}".format(game.players[0]))

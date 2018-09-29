@@ -84,9 +84,9 @@ class Player:
 
     def draw_two_and_return_two(self):
         self.draw_cards()
-        print(self.cards)
         valid_card_selection = "1234" if len(self.cards) == 4 else "123"
         for i in range(2):
+            print(self.cards)
             selected_card = "0"
             while selected_card not in valid_card_selection:
                 selected_card = input("{}, Select card to return: ".format(self.name))
