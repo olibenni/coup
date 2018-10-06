@@ -54,9 +54,10 @@ class Game:
         return False, False
 
     def remove_player(self, player):
-        self.player_index -= 1
-        self.players.remove(player)
-        print("XXX Death of player {} XXX".format(player.name))
+        if player in self.players:
+            self.player_index -= 1
+            self.players.remove(player)
+            print("XXX Death of player {} XXX".format(player.name))
 
 if __name__ == "__main__":
     game = Game()
