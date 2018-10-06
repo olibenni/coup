@@ -1,16 +1,19 @@
-from actions import actions, BlockAction
+from actions import actions, Coup
+
 
 class Player:
-    def __init__(self, game, name, seat):
+    def __init__(self, game, name):
         self.game = game
         self.name = name
-        self.seat = seat
         self.coins = 2
         self.cards = []
         self.draw_cards()
 
     def draw_cards(self):
-        self.cards.append(self.game.deck.draw())
+        self.draw_card()
+        self.draw_card()
+
+    def draw_card(self):
         self.cards.append(self.game.deck.draw())
 
     def loose_life(self):
@@ -24,6 +27,10 @@ class Player:
             self.game.remove_player(self)
 
     def request_action(self):
+        if self.coins >= 10:
+            print("{} you must perform a coup since you have 10 or more coins".format(self.name))
+            return Coup
+
         print("{}, select action".format(self.name))
         for i, action in enumerate(actions):
             if action.cost <= self.coins:
@@ -45,14 +52,14 @@ class Player:
             return action
 
     def select_victim(self):
-        selected_player = None
+        selected_player = "0"
         selectable_players = [player for player in self.game.players if player != self]
-        while selected_player not in [player.seat + 1 for player in selectable_players]:
-            for player in selectable_players:
-                print("[{}] {}".format(player.seat + 1, player.name))
-            selected_player = int(input("{}, Select victim: ".format(self.name)))
+        while selected_player not in "".join([str(i + 1) for i in range(len(selectable_players))]):
+            for i, player in enumerate(selectable_players):
+                print("[{}] {}".format(i + 1, player.name))
+            selected_player = input("{}, Select victim: ".format(self.name))
 
-        return self.game.players[selected_player - 1]
+        return selectable_players[int(selected_player) - 1]
 
     def performs_challenge(self):
         res = None
@@ -69,13 +76,7 @@ class Player:
         return res == "y"
 
     def pass_challenge(self, action):
-        allowed_actions = []
-        for card in self.cards:
-            if card.action:
-                allowed_actions.append(card.action.name)
-            if card.block_action:
-                allowed_actions.append(card.block_action.name)
-        return action.name in allowed_actions
+        return self._get_card_for_action(action) is not None
 
     def get_robbed(self):
         coins = min(max(self.coins, 0), 2)
@@ -95,6 +96,20 @@ class Player:
             valid_card_selection = valid_card_selection[:-1]
 
         self.game.deck.shuffle()
+
+    def won_challenge(self, action):
+        card = self._get_card_for_action(action)
+        self.game.deck.add(card)
+        self.cards.remove(card)
+        self.game.deck.shuffle()
+        self.draw_card()
+
+    def _get_card_for_action(self, action):
+        for card in self.cards:
+            if card.action and card.action.name == action.name:
+                return card
+            if card.block_action and card.block_action.name == action.name:
+                return card
 
     def __str__(self):
         return self.name

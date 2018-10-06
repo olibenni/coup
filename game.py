@@ -14,14 +14,13 @@ class Game:
 
         for i in range(int(number_of_players)):
             name = input("Name for player {}: ".format(i + 1))
-            self.players.append(Player(self, name, i))
+            self.players.append(Player(self, name))
 
     def next_turn(self):
         self.player_index += 1
         print("======================================================")
         for player in self.players:
-            print([player.name, player.coins, len(player.cards)], player.cards)
-        print(self.current_player.cards)
+            print([player.name, "Coins: {}".format(player.coins)], player.cards)
         print("======================================================")
 
     @property
@@ -33,7 +32,8 @@ class Game:
         return self.players[self.player_index % len(self.players)]
 
     def next_player(self, player):
-        next_seat = (player.seat + 1) % len(self.players)
+        seat = self.players.index(player)
+        next_seat = (seat + 1) % len(self.players)
         return self.players[next_seat]
 
     def round_of_challenges(self, player, action):
@@ -42,6 +42,7 @@ class Game:
             if challenging_player.performs_challenge():
                 if player.pass_challenge(action):
                     challenging_player.loose_life()
+                    player.won_challenge(action)
                     action.resolve()
                     return True, True
                 else:
