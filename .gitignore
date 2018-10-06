@@ -1,2 +1,11 @@
-idea
- __pycache__
+.cache
+.DS_Store
+.DS_Store
+logs
+venv
+.env*
+env/
+.idea
+*.pyc
+__pycache__
+*.zip
