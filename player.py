@@ -17,9 +17,9 @@ class Player:
         self.cards.append(self.game.deck.draw())
 
     def loose_life(self):
-        print(self.cards)
         if len(self.cards) > 1:
             selected_card = "0"
+            print(self.cards)
             while selected_card not in "12":
                 selected_card = input("{}, Select card to discard [1/2]: ".format(self.name))
             self.cards.pop(int(selected_card) - 1)  # Todo: put in graveyard for display
