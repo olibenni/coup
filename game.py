@@ -41,18 +41,38 @@ class Game:
                 if player.pass_challenge(action):
                     challenging_player.loose_life()
                     player.won_challenge(action)
-                    action.resolve()
-                    return True, True
+                    return player  # Failed challenge
                 else:
                     player.loose_life()
-                    return True, False
+                    return challenging_player  # Successful challenge
 
             challenging_player = game.next_player(challenging_player)
 
-        return False, False
+        return player  # No challenge made
+
+    def round_of_blocks(self, player, victim, action):
+        blocking_player = self.next_player(player)
+        while blocking_player is not player:
+            if victim is not None and blocking_player is not victim:
+                # Only victim can block
+                pass
+            elif blocking_player.performs_block():
+                # If no victim, all can block
+                blocking_action = action.blocked_by(blocking_player)
+                challenge_winner = game.round_of_challenges(blocking_player, blocking_action)
+                if blocking_player is not challenge_winner:
+                    return player  # Block failed, player wins
+
+                return blocking_player  # Block successful
+
+            blocking_player = game.next_player(blocking_player)
+
+        return player  # No block made, player wins
 
     def remove_player(self, player):
         if player in self.players:
+            if player is self.current_player:
+                self.current_player = self.next_player(self.current_player)
             self.players.remove(player)
             print("XXX Death of player {} XXX".format(player.name))
 
@@ -61,41 +81,25 @@ if __name__ == "__main__":
     game.start()
     while not game.over:
         game.next_turn()
-        end_turn = False
-
         current_player = game.current_player
+        selected_victim = None
 
         selected_action = current_player.request_action()
-        victim = None
         if selected_action.requires_victim:
-            victim = current_player.select_victim()
+            selected_victim = current_player.select_victim()
 
-        selected_action = selected_action(current_player, victim)
+        selected_action = selected_action(current_player, selected_victim)
 
         if selected_action.can_be_challenged:
-            end_turn, current_player_won = game.round_of_challenges(current_player, selected_action)
-            if end_turn:
-                continue  # Challenge made and resolved
+            challenge_winner = game.round_of_challenges(current_player, selected_action)
+            if current_player is not challenge_winner:
+                continue  # Action successfully challenged
 
         if selected_action.can_be_blocked is True:
-            blocking_player = game.next_player(current_player)
-            while blocking_player is not game.current_player:
-                if victim is not None and blocking_player is not victim:
-                    # Only victim can block
-                    pass
-                elif blocking_player.performs_block():
-                    # If no victim, all can block
-                    blocking_action = selected_action.blocked_by(blocking_player)
-                    end_turn, blocking_player_won = game.round_of_challenges(blocking_player, blocking_action)
-                    if end_turn and blocking_player_won:
-                        break  # Block successful
-                    if end_turn:
-                        selected_action.resolve()
-                        break  # Block failed, action resolves
+            block_winner = game.round_of_blocks(current_player, selected_victim, selected_action)
+            if current_player is not block_winner:
+                continue  # Action successfully blocked
 
-                blocking_player = game.next_player(blocking_player)
-
-        if not end_turn:
-            selected_action.resolve()
+        selected_action.resolve()
 
     print("Game Over!!, Winner is {}".format(game.players[0]))
