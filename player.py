@@ -23,7 +23,7 @@ class Player:
             while selected_card not in "12":
                 selected_card = input("{}, Select card to discard [1/2]: ".format(self.name))
             self.cards.pop(int(selected_card) - 1)  # Todo: put in graveyard for display
-        else:
+        elif len(self.cards) == 1:
             self.game.remove_player(self)
 
     def request_action(self):
