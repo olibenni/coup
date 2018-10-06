@@ -3,7 +3,7 @@ from deck import Deck
 
 
 class Game:
-    current_player = None
+    current_player = None  # Cannot be relied on outside of game scope!
     players = []
     deck = Deck()
 
@@ -32,6 +32,11 @@ class Game:
     def next_player(self, player):
         seat = self.players.index(player)
         next_seat = (seat + 1) % len(self.players)
+        return self.players[next_seat]
+
+    def previous_player(self, player):
+        seat = self.players.index(player)
+        next_seat = (seat - 1) % len(self.players)
         return self.players[next_seat]
 
     def round_of_challenges(self, player, action):
@@ -72,7 +77,7 @@ class Game:
     def remove_player(self, player):
         if player in self.players:
             if player is self.current_player:
-                self.current_player = self.next_player(self.current_player)
+                self.current_player = self.previous_player(self.current_player)
             self.players.remove(player)
             print("XXX Death of player {} XXX".format(player.name))
 
