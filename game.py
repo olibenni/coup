@@ -3,7 +3,7 @@ from deck import Deck
 
 
 class Game:
-    player_index = -1
+    current_player = None
     players = []
     deck = Deck()
 
@@ -16,8 +16,10 @@ class Game:
             name = input("Name for player {}: ".format(i + 1))
             self.players.append(Player(self, name))
 
+        self.current_player = self.players[-1]
+
     def next_turn(self):
-        self.player_index += 1
+        self.current_player = self.next_player(self.current_player)
         print("======================================================")
         for player in self.players:
             print([player.name, "Coins: {}".format(player.coins)], player.cards)
@@ -26,10 +28,6 @@ class Game:
     @property
     def over(self):
         return len(self.players) == 1
-
-    @property
-    def current_player(self):
-        return self.players[self.player_index % len(self.players)]
 
     def next_player(self, player):
         seat = self.players.index(player)
@@ -55,7 +53,6 @@ class Game:
 
     def remove_player(self, player):
         if player in self.players:
-            self.player_index -= 1
             self.players.remove(player)
             print("XXX Death of player {} XXX".format(player.name))
 
