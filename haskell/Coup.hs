@@ -177,11 +177,15 @@ endOfRound = do
   case (players st) of (p :<| Empty) -> say (show (color p) ++ " wins!")
                        _ -> do nextPlayer
                                gameRound
-checkBlocks :: Game (Maybe Color)
-checkBlocks = do
+checkBlocks :: Action -> Maybe Color -> Game (Maybe Color)
+checkBlocks act target = do
   (b, _) <- lift $ getChoice "Is there a block?"  [True, False]
-  if b then Just <$> (^. _1)
-                 <$> (otherPlayers >>= (\x -> (lift $ getChoice "Choose blocking player:" x)))
+  if b then case act of
+              BlockAssassinate -> return target
+              BlockSteal      -> return target
+              _ -> Just <$> (^. _1)
+                   <$> (otherPlayers >>=
+                        (\x -> (lift $ getChoice "Choose blocking player:" x)))
        else return Nothing
 
 revealAndReplace :: Character -> Game Character
@@ -238,13 +242,13 @@ gameRound = do cp <- use currentPlayer
                target <- if hasTarget act
                          then Just <$> chooseTarget
                          else return Nothing
+               payForAction act
                challengeSuccess <- challenge (color cp) act
 
                unless challengeSuccess $ do
-                 payForAction act
                  let resolves = effect act target
                  case toBlock act of
-                   Just blockAction -> do blocker <- checkBlocks
+                   Just blockAction -> do blocker <- checkBlocks blockAction target
                                           case blocker of
                                             Just someone  -> challenge someone blockAction >>= flip when resolves
                                             Nothing -> resolves
